@@ -15,7 +15,7 @@ from google.auth.transport.requests import Request
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 
-def verify_steam_email(service, msg_id):
+def verify_steam_email(service, i, msg_id):
     message = service.users().messages() \
         .get(userId='me', id=msg_id, format='raw').execute()
     msg_str = base64.urlsafe_b64decode(message['raw'].encode('ASCII'))
@@ -23,7 +23,7 @@ def verify_steam_email(service, msg_id):
 
     # first link is the entire Steam HTML frame for the email display
     link = soup.findAll('a')[1].get('href')
-    print(f'Opening \'{link}\'')
+    print(f'#{i}: Opening \'{link}\'')
     # this will only work for macOS
     # check https://stackoverflow.com/a/24353812/6908755
     chrome_path = 'open -a /Applications/Google\\ Chrome.app %s'
@@ -59,13 +59,13 @@ def main():
         'from:(noreply@steampowered.com) ' \
         'subject:(Community Market Listing Confirmation)'
     messages = service.users().messages() \
-        .list(userId='me', q=query) \
+        .list(userId='me', q=query, maxResults=500) \
         .execute().get('messages')
 
     print(f'There are {len(messages)} market listings to confirm!')
-    for msg in messages:
-        verify_steam_email(service, msg["id"])
-        time.sleep(2)
+    for i, msg in enumerate(messages):
+        verify_steam_email(service, i, msg["id"])
+        time.sleep(3)
 
 
 if __name__ == '__main__':
